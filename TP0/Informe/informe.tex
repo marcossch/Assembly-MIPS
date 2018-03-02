@@ -1,0 +1,489 @@
+\documentclass[a4paper, 10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{caratula}
+
+\newcommand{\Z}{\mathbb{Z}}
+\def\code#1{\texttt{#1}}
+\newcommand\tab[1][0.5cm]{\hspace*{#1}}
+
+\geometry{a4paper, margin=0.7in}
+
+\begin{document}
+    %Caratula
+    \pagenumbering{gobble}
+    \newpage
+
+    \begin{center}
+        \includegraphics{images/logo}
+    \end{center}
+
+    \materia{Organización de Computadoras}
+    \submateria{Segundo Cuatrimestre 2017}
+    \titulo{Trabajo Práctico 0}
+
+    \integrante{Rodrigo De Rosa}{97799}{rodrigoderosa@outlook.com}
+    \integrante{Marcos Schapira}{97934}{schapiramarcos@gmail.com}
+    \integrante{Facundo Guerrero}{97981}{facundoiguerrero@gmail.com}
+    \maketitle
+    %Fin caratula
+    %Table of contents
+    \newpage
+    \pagenumbering{roman}
+    \tableofcontents
+    %Fin table of contents
+    %Informe
+    \newpage
+	\pagenumbering{arabic}
+	\section{Diseño e Implementación}
+		En este trabajo práctico inicial, cuyo objetivo es el de familiarizarnos con el
+		entorno de desarrollo que utilizaremos en el cuatrimestre, se implementa un programa
+		que recibe una entrada de texto e identifica los palíndromos que se encuentran en
+		ella.
+		\subsection{Estructura del problema}
+			La entrada de texto previamente mencionada es una cadena de caracteres \emph{ASCII}
+			sin ninguna restricción. Dentro de esta cadena son consideradas \emph{palabras} aquellas
+			que están compuestas por los caracteres:
+			\begin{itemize}
+				\item $a-z$
+				\item $0-9$
+				\item $\_$ y $-$
+			\end{itemize}
+			\tab Cualquier otro caracter \emph{ASCII} es considerado un \emph{espacio}. Es decir,
+			indica el fin de una \emph{palabra} y el comienzo de otra. Cabe destacar que una cadena
+			con un sólo caracter es considerada \emph{palabra}.
+		\subsection{Entorno}
+			El trabajo se realizó en una máquina virtual \emph{NetBSD} (que simula tener un procesador
+			\emph{MIPS}) montada por el emulador \emph{GXemul} en \emph{Ubuntu 17.04}.
+		\subsection{Complicaciones}
+			La principal complicación que surgió en el desarrollo del trabajo fue el hecho de que algunas
+			librerías que existen en \emph{Ubuntu} no existen en \emph{NetBSD} (particularmente \emph{argp}),
+			por lo que hubo que adaptarse a esta limitación y utilizar librerías que funcionaran en ambos. \\
+			\tab Por último, un problema a resolver fue el de tener que enviar por \code{scp} todos los archivos
+			que fueran modificados en \emph{Ubuntu} hacia \emph{NetBSD}. De todos modos este problema fue
+			resuelto utilizando \code{sshfs} que permite utilizar la interfaz gráfica de \emph{Ubuntu} para
+			modificar un directorio en la máquina virtual.
+		\subsection{Desarrollo}
+			El programa fue implementado en lenguaje C con sus librerías estándar y se utilizó la librería
+			\code{getopt} para facilitar el parseo de los flags. \\
+			\tab En cuanto al problema en sí, la solución implementada consiste en buscar las previamente
+			llamadas \emph{palabras} dentro de una cadena de caracteres y verificar si invertidas son iguales
+			a su versión original (esto indica que son palíndromos). Para hacer esto se utilizó una implementación
+			de la función \code{strrev} que, si bien en las versiones más actuales de C viene en las librerías
+			estándar, en \emph{NetBSD} no está dentro de estas.
+			A continuación se detalla la documentación explicita de las funciones implementadas.
+		\subsection{Manejo de errores}
+			A lo largo del desarrollo del programa se definen ciertos errores para manejar posibles fallas del
+			programa y así lograr un funcionamiento controlado y acorde. Estas son:
+			\begin{itemize}
+
+				\item \code{ALLOC$\_$ERROR}
+				\\\textit{El error se puede dar al llamar a la función \code{malloc}.
+				Junto a su mensaje específico se imprime a la vez el código generado por strerror en
+				la anterior función.}
+					\subitem \textbf{Mensaje:}
+						\subsubitem \code{An error ocurred while allocating memory!}
+
+				\item \code{REALLOC$\_$ERROR}
+				\\\textit{El error se puede dar al llamar a la función \code{realloc}.
+				Junto a su mensaje específico se imprime a la vez el código generado por strerror en
+				la anterior función.}
+					\subitem \textbf{Mensaje:}
+						\subsubitem \code{An error ocurred while reallocating memory!}
+
+				\item \code{INPUT$\_$OPEN$\_$ERROR}
+				\\\textit{El error se puede dar al llamar la función \code{fopen}.
+				Junto a su mensaje específico se imprime a la vez el código generado por strerror en
+				la anterior función.}
+					\subitem \textbf{Mensaje:}
+						\subsubitem \code{An error ocurred while opening input file!}
+
+				\item \code{OUTPUT$\_$OPEN$\_$ERROR}
+				\\\textit{El error se puede dar al llamar la función \code{fopen}.
+				Junto a su mensaje específico se imprime a la vez el código generado por strerror en
+				la anterior función.}
+					\subitem \textbf{Mensaje:}
+						\subsubitem \code{An error ocurred while opening output file!}
+
+				\item \code{RESULT$\_$WRITING$\_$ERROR}
+				\\\textit{El error se puede dar al llamar la función \code{fprintf}
+				si no se logró escribir todo el mensaje o si algo falló.
+				Junto a su mensaje específico se imprime a la vez el código generado por strerror en
+				la anterior función.}
+					\subitem \textbf{Mensaje:}
+						\subsubitem \code{An error ocurred while writing the result!}
+
+				\item \code{PALINDROME$\_$ERROR$\_$MESSAGE}
+				\\\textit{El error se puede dar al llamar a la función interna \code{get$\_$palindromes}.
+				Esta devuelve \code{NULL} en caso de fallar (junto con su adecuado mensaje, explicado
+				a continuación en el informe).}
+					\subitem \textbf{Mensaje:}
+						\subsubitem \code{An error ocurred while checking for palindromes!}
+
+			\end{itemize}
+		\subsubsection{Valores devueltos por la función \code{main}}
+			Los siguientes códigos son mensajes devueltos por la función \code{main} al utilizar las funciones
+			internas del programa(documentadas en la próxima sección del informe). Algunos de estos valores,
+			en especial \code{FAIL} y \code{SUCCESS} son utilizados en otras funciones como valores booleanos
+			False y True respectivamente.
+			\begin{itemize}
+				\item \code{SUCCESS} valor 0
+					\\\textit{valor booleano de éxito.}
+				\item \code{FAIL} valor 1
+					\\\textit{valor booleano de falla.}
+				\item \code{WRITING$\_$ERROR} valor 2
+					\\\textit{ocurre cuando la función \code{write$\_$result} devuelve \code{FAIL}.}
+				\item \code{PALINDROME$\_$ERROR} valor 3
+					\\\textit{ocurre cuando la función \code{get$\_$palindromes} falla. Previamente se
+					imprime el error \code{PALINDROME$\_$ERROR$\_$MESSAGE}}
+				\item \code{BAD$\_$ARGUMENTS} valor 4
+					\\\textit{ocurre cuando la función \code{process$\_$params} devuelve este mismo
+					codigo al no poder procesar los parámetros correctamente.}
+				\item \code{BAD$\_$INPUT$\_$PATH} valor 5
+					\\\textit{ocurre cuando la función \code{open$\_$input} devuelve \code{FAIL}.}
+				\item \code{BAD$\_$OUTPUT$\_$PATH} valor 6
+					\\\textit{ocurre cuando la función \code{open$\_$output} devuelve \code{FAIL}.}
+				\item \code{READING$\_$ERROR} valor 7
+					\\\textit{ocurre cuando la función \code{read$\_$input} devuelve \code{FAIL o NULL}.}
+			\end{itemize}
+		\subsection{Documentación}
+			Las siguientes funciones fueron implementadas con el objetivo de encontrar una solución al problema
+			en cuestión:
+			\begin{itemize}
+
+				\item \code{char$*$ read$\_$input(FILE$*$ fp, size$\_$t size)}
+				\\\textit{Lee el string entrante y lo devuelve.}
+					\subitem \textbf{Parámetros:}
+						\subsubitem \code{fp}: File Pointer de input
+						\subsubitem \code{size}: Tamaño inicial del arreglo
+					\subitem \textbf{Return:}
+						\subsubitem El string leído o NULL en caso de fallar
+						(imprimiendo el el error ocurrido)
+					\subitem \textbf{Errores Posibles:}
+						\subsubitem \code{REALLOC$\_$ERROR}
+						\subsubitem \code{ALLOC$\_$ERROR}
+
+				\item \code{FILE$*$ open$\_$input(char$*$ path)}
+				\\\textit{Abre el input$\_$file y se devuelve su fp.
+				Si el path es \code{NULL},
+				se utiliza \code{DEFAULT$\_$INPUT} siendo en este caso stdin.}
+					\subitem \textbf{Parámetros:}
+						\subsubitem \code{path}: Dirección del archivo a abrir
+					\subitem \textbf{Return:}
+						\subsubitem File Pointer de input o \code{DEFAULT$\_$INPUT}
+						en caso de no especificar un path.
+					\subitem \textbf{Errores Posibles:}
+						\subsubitem \code{INPUT$\_$OPEN$\_$ERROR}
+
+				\item \code{FILE$*$ open$\_$output(char$*$ path)}
+				\\\textit{Abre el output$\_$file y se devuelve su fp. Si el path es \code{NULL}
+				se utiliza \code{DEFAULT$\_$OUTPUT} siendo en este caso stdout.}
+					\subitem \textbf{Parámetros:}
+						\subsubitem \code{path}: Dirección del archivo a abrir
+					\subitem \textbf{Return:}
+						\subsubitem File Pointer de output o \code{DEFAULT$\_$OUTPUT} en caso de
+						no especificar un path.
+					\subitem \textbf{Errores Posibles:}
+						\subsubitem \code{OUTPUT$\_$OPEN$\_$ERROR}
+
+				\item \code{int write$\_$result(FILE$*$ output$\_$fp, char$*$ result)}
+				\\\textit{Escribe los palíndromos en el archivo indicado.}
+					\subitem \textbf{Parámetros:}
+						\subsubitem \code{output$\_$fp}: File Pointer del archivo a escribir
+						\subsubitem \code{result}: String a escribir en el archivo
+					\subitem \textbf{Return:}
+						\subsubitem \code{SUCCESS o FAIL}
+					\subitem \textbf{Errores Posibles:}
+						\subsubitem \code{RESULT$\_$WRITING$\_$ERROR}
+
+				\item \code{void close$\_$files(FILE$*$ fp1, FILE$*$ fp2)}
+				\\\textit{Cierra los dos archivos recibidos.}
+					\subitem \textbf{Parámetros:}
+						\subsubitem \code{fp2}: File Pointer de archivo a cerrar
+						\subsubitem \code{fp1}: File Pointer de archivo a cerrar
+
+				\item \code{char$*$ strrev(char$*$ str)}
+				\\\textit{Invierte la cadena recibida.}
+					\subitem \textbf{Parámetros:}
+						\subsubitem \code{str}: Cadena de caracteres a invertir
+					\subitem \textbf{Return:}
+						\subsubitem Cadena recibida, en orden inverso
+
+				\item \code{char$*$ get$\_$palindromes(char$*$ string)}
+				\\\textit{Devuelve un arreglo listo para escribir en un archivo
+				que contiene en cada linea un palíndromo del string recibido.}
+					\subitem \textbf{Parámetros:}
+						\subsubitem \code{string}: Cadena a analizar en busca de palíndromos
+					\subitem \textbf{Return:}
+						\subsubitem Cadena que contiene solo palíndromos, con
+						formato de uno por linea. En caso de error devuelve \code{NULL}
+					\subitem \textbf{Errores Posibles:}
+						\subsubitem \code{REALLOC$\_$ERROR}
+						\subsubitem \code{ALLOC$\_$ERROR}
+
+				\item \code{bool is$\_$palindrome(char$*$ string)}
+				\\\textit{Verifica si una cadena es un palíndromo o no.}
+					\subitem \textbf{Parámetros:}
+						\subsubitem \code{string}: Cadena a analizar
+					\subitem \textbf{Return:}
+						\subsubitem Booleano
+					\subitem \textbf{Errores Posibles:}
+						\subsubitem \code{REALLOC$\_$ERROR}
+						\subsubitem \code{ALLOC$\_$ERROR}
+
+				\item \code{void print$\_$help()}
+				\\\textit{Imprime por consola información de los comandos y sobre el
+				uso del programa.}
+
+				\item \code{void print$\_$version()}
+				\\\textit{Imprime por consola la version del programa y los integrantes del grupo.}
+
+				\item \code{int process$\_$params(int argc, char$**$ argv,
+				char$**$ input$\_$file, char$**$ output$\_$file)}
+				\\\textit{Procesa los parámetros de entrada del programa y almacena
+				los paths correspondientes en los parámetros de la función.}
+					\subitem \textbf{Parámetros:}
+						\subsubitem \code{argc}: Cantidad de argumentos del programa
+						\subsubitem \code{argv}: Vector de argumentos del programa
+						\subsubitem \code{input$\_$file}: Puntero al string que contiene el path
+						del input
+						\subsubitem \code{output$\_$file}: Puntero al string que contiene el path
+						del output
+					\subitem \textbf{Return:}
+						\subsubitem \code{SUCCESS o BAD$\_$ARGUMENTS} , en el segundo caso este valor
+						es verificado y manejado en la función \code{main}.
+
+
+			\end{itemize}
+	\section{Ejecución}
+		\subsection{Instrucciones para la compilación}
+			Para compilar el programa se debe abrir una consola en el directorio donde se encuentra el archivo
+			fuente (\code{tp.c}) y correr el comando: \code{gcc -Wall tp.c [-o OUTPUT]}.
+		\subsection{Instrucciones para la ejecución}
+			Suponiendo que nuestro archivo ejecutable fuera \code{tp0}, los comandos de consola para ejecutarlo
+			son:
+			\begin{itemize}
+				\item \code{./tp0 -h} para ver la ayuda.
+				\item \code{./tp0 -v} para ver la versión.
+				\item \code{./tp0 -i ~/INPUT -o ~/OUTPUT}  para correr el programa con \code{INPUT} como archivo de entrada
+				y \code{OUTPUT} como archivo de salida. Ambos son opcionales y son reemplazados por \code{stdin} y \code{stdout}
+				respectivamente.
+			\end{itemize}
+		\subsection{Pruebas}
+			Para probar el correcto funcionamiento del programa se utilizo un set de prueba. A continuación
+			se muestra la composición y resultados de las ejecuciones de dicho set. Ademas, notar que
+      desde la prueba 1 hasta la prueba 9, la entrada es mediante un archivo, es decir que
+      se provee el archivo mediante \code{-i test$\_$inputN} ( con N = número de prueba), y la salida
+      por terminal. Por último, vale aclarar que las pruebas se realizaron tanto en \code{Ubuntu}
+      como en \code{NetBSD}.
+
+      \subsubsection{Prueba 1}
+        Caso de prueba provisto por la cátedra. Vale aclarar que un carácter es considerado
+        palíndromo.\\
+
+				\textbf{Entrada:}\\
+				\tab\tab\code{Somos los primeros en completar el TP 0.}\\
+				\tab\tab\code{Ojo que la fecha de entrega del TP0 es el martes 12 de Septiembre.}\\
+
+        \textbf{Salida:}\\
+				\tab\tab\code{Somos}\\
+        \tab\tab\code{0}\\
+				\tab\tab\code{Ojo}
+
+			\subsubsection{Prueba 2}
+        Este caso de prueba intenta demostrar el correcto funcionamiento de la
+        detección de espacios. Como se puede ver, en la primera linea las palabras
+        están separadas por el carácter espacio, pero en la segunda se linea se
+        intenta demostrar que los caracteres no validos ( ver sección 1.1 )
+        también funcionan como espacios. Ademas, vale notar que la palabra
+        palíndroma se detecta sin importar mayúsculas o minúsculas.\\
+
+				\textbf{Entrada:}\\
+				\tab\tab\code{MeNEm neUquEn 1a2d323d2a1 adke}\\
+				\tab\tab\code{pepe$)$nene$/$larral$=$dom-mod?a23$\_$32a}\\
+
+        \textbf{Salida:}\\
+				\tab\tab\code{MeNEm}\\
+				\tab\tab\code{neUquEn}\\
+				\tab\tab\code{1a2d323d2a1}\\
+				\tab\tab\code{larral}\\
+				\tab\tab\code{dom-mod}\\
+				\tab\tab\code{a23$\_$32a}
+
+			\subsubsection{Prueba 3}
+        El objetivo de esta prueba es ver el funcionamiento de los caracteres
+        validos que no sean letras ni números. Como se vio en la sección 1.1,
+        \code{$\-$} y \code{$\_$} deben ser considerados como caracteres validos.
+        Entonces esta prueba quiere demostrar el funcionamiento de dichos
+        caracteres. Ademas, nuevamente notar que la detección de las palabras
+        no es \code{sensitive}.\\
+
+				\textbf{Entrada:}\\
+        \tab\tab\code{aD$\-$2eT$\_$R$\_$Te2$\-$Da$/$4004$?$CheVr}\\
+        \tab\tab\code{peep23$***$   avion${daad}$}\\
+        \tab\tab\code{neUqUeN$\&$NarNran}\\
+
+        \textbf{Salida:}\\
+        \tab\tab\code{aD$\-$2eT$\_$R$\_$Te2$\-$Da}\\
+        \tab\tab\code{4004}\\
+        \tab\tab\code{daad}\\
+        \tab\tab\code{neUqUeN}\\
+        \tab\tab\code{NarNran}\\
+
+      \subsubsection{Prueba 4}
+        Esta prueba tiene el objetivo de corroborar el caso borde donde la
+        entrada es vaciá.\\
+
+        \textbf{Entrada:}\\
+        \tab\tab\code{ }\\
+
+        \textbf{Salida:}\\
+        \tab\tab\code{ }\\
+
+      \subsubsection{Prueba 5}
+        El objetivo de esta prueba es verificar el correcto funcionamiento de
+        la detección un único carácter.\\
+
+				\textbf{Entrada:}\\
+        \tab\tab\code{a}\\
+
+        \textbf{Salida:}\\
+        \tab\tab\code{a}\\
+
+
+      \subsubsection{Prueba 6}
+        El objetivo de esta prueba es corroborar el correcto funcionamiento del
+        programa cuando se alcanza el limite inicial de tamaño del string que
+        contiene las palabras palíndromas. En esta prueba, se ingresa una palabra
+        palíndroma de 128 caracteres que es la capacidad máxima inicial.\\
+        \textbf{La entrada para las siguientes pruebas es continua. Se hace un salto
+        de linea con fines ilustrativos.}\\
+
+        \textbf{Entrada:}\\
+        \tab\tab\code{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-\\-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}\\
+
+        \textbf{Salida:}\\
+        \tab\tab\code{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-\\-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}\\
+
+      \subsubsection{Prueba 7}
+        Esta prueba intenta demostrar el funcionamiento adecuado del
+        programa cuando se supera el tamaño inicial del string donde se guardan
+        las palabras palíndromas. Aquí, se ingresa una palabra palíndroma de 129
+        caracteres, es decir que se supera en 1 carácter la capacidad máxima.
+        De esta manera, se esta forzando al programa a aumentar la capacidad
+        máxima de almacenado. En otras palabras, se intenta probar el correcto
+        funcionamiento del caso borde de la memoria, donde el programa debe
+        hacer un realloc. Notar que se presentan dos casos de prueba, uno donde
+        una misma palabra supera el limite, y en segundo lugar con palabras
+        distintas.\\
+        \textbf{La entrada para las siguientes pruebas es continua. Se hace un salto
+        de linea con fines ilustrativos.}\\
+
+        \textbf{Entrada 1:}\\
+        \tab\tab\code{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-\\-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}\\
+
+        \textbf{Salida 1:}\\
+        \tab\tab\code{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-\\-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}\\
+
+        \textbf{Entrada 2:}\\
+        \tab\tab\code{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-\\-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa menem}\\
+
+        \textbf{Salida 2:}\\
+        \tab\tab\code{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-\\-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}\\
+        \tab\tab\code{menem}\\
+
+      \subsubsection{Prueba 8}
+        Esta prueba tiene como objetivo verificar el funcionamiento del programa
+        cuando se alcanza el máximo inicial lectura. Entonces, se provee al
+        programa una entrada de 256 caracteres.\\
+        \textbf{La entrada para las siguientes pruebas es continua. Se hace un salto
+        de linea con fines ilustrativos.}\\
+
+        \textbf{Entrada:}\\
+        \tab\tab\code{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-\\-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-\\-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-\\-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}\\
+
+        \textbf{Salida:}\\
+        \tab\tab\code{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-\\-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-\\-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-\\-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}\\
+
+      \subsubsection{Prueba 9}
+        El objetivo de esta prueba es corroborar el correcto funcionamiento del
+        programa cuando se supera el tamaño inicial de lectura. Con dicho motivo,
+        se ingresa una entrada de 257 caracteres, superando en 1 carácter la
+        capacidad máxima. Al igual que la prueba 7, se esta probando el realloc
+        pero en este caso para la lectura.
+        \textbf{La entrada para las siguientes pruebas es continua. Se hace un salto
+        de linea con fines ilustrativos.}\\
+
+        \textbf{Entrada:}\\
+        \tab\tab\code{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-\\-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-\\-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-\\-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}\\
+
+        \textbf{Salida:}\\
+        \tab\tab\code{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-\\-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-\\-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-\\-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}\\
+
+      \subsubsection{Prueba 10}
+        Se repite la prueba 1, esta vez con el objetivo de probar la entrada-salida vía archivos.
+        La entrada se pasa por parámetro como  \code{-i test$\_$input1} y se pasa el archivo de salida
+         \code{-i test$\_$output10}. La salida mostrada, es lo que contiene el archivo de salida
+        anteriormente mencionado.\\
+
+				\textbf{Entrada:}\\
+				\tab\tab\code{Somos los primeros en completar el TP 0.}\\
+				\tab\tab\code{Ojo que la fecha de entrega del TP0 es el martes 12 de Septiembre.}\\
+
+        \textbf{Salida:}\\
+				\tab\tab\code{Somos}\\
+        \tab\tab\code{0}\\
+				\tab\tab\code{Ojo}
+
+      \subsubsection{Prueba 11}
+        Se repite la prueba 2, esta vez con el objetivo de probar la entrada-salida vía terminal.
+        Se correrá el programa sin ningún parámetro, y se hará el ingreso por entrada estándar
+        (indicando su finalización con \code{Ctrl+D}) y se obtendrá la salida de la misma forma.\\
+
+        \textbf{Entrada:}\\
+        \tab\tab\code{MeNEm neUquEn 1a2d323d2a1 adke}\\
+        \tab\tab\code{pepe$)$nene$/$larral$=$dom-mod?a23$\_$32a}\\
+
+        \textbf{Salida:}\\
+        \tab\tab\code{MeNEm}\\
+        \tab\tab\code{neUquEn}\\
+        \tab\tab\code{1a2d323d2a1}\\
+        \tab\tab\code{larral}\\
+        \tab\tab\code{dom-mod}\\
+        \tab\tab\code{a23$\_$32a}
+
+      \subsubsection{Prueba 12}
+        Se repite la prueba 3, con el objetivo de verificar la entrada estándar y salida vía archivos.
+        La salida se pasa por parámetros como \code{-i test$\_$input12}. La salida mostrada
+        a continuación, es lo que contiene el archivo de salida anteriormente mencionado.\\
+
+        \textbf{Entrada:}\\
+        \tab\tab\code{aD$\-$2eT$\_$R$\_$Te2$\-$Da$/$4004$?$CheVr}\\
+        \tab\tab\code{peep23$***$   avion${daad}$}\\
+        \tab\tab\code{neUqUeN$\&$NarNran}\\
+
+        \textbf{Salida:}\\
+        \tab\tab\code{aD$\-$2eT$\_$R$\_$Te2$\-$Da}\\
+        \tab\tab\code{4004}\\
+        \tab\tab\code{daad}\\
+        \tab\tab\code{neUqUeN}\\
+        \tab\tab\code{NarNran}\\
+
+	\section{Conclusiones}
+		La principal conclusión que obtuvimos a partir del desarrollo de este trabajo práctico es que, al trabajar en \emph{NetBSD}
+		se debe ser más cuidadoso al programar que en el caso de, por ejemplo, \emph{Ubuntu}. Con esto nos referimos a ciertas
+		situaciones particulares en las que \emph{Ubuntu} resuelve ciertos problemas de la programación que \emph{NetBSD} no resuelve
+		y resulta en un error. \\
+		\tab Por ejemplo, en la línea 291 de \code{tp.c} se agrega un fin de linea que no es necesario en \emph{Ubuntu}, pues lo
+		'resuelve solo', pero sí lo es en \emph{NetBSD} pues en este último, el programa no encuentra en fin de linea e imprime
+		caracteres de más. \\
+		\tab Por esta misma razón, notamos que es recomendable trabajar constantemente utilizando la carpeta virtual de \code{sshfs}
+		para poder compilar y ejecutar el programa en \emph{NetBSD} en lugar de hacerlo en \emph{Ubuntu}. De todas maneras, al tener
+		que desarrollar en \emph{Assembler}, no queda otra opción que hacer esto recién mencionado.
+\end{document}
